@@ -258,13 +258,124 @@ const concat2 = (...gens) => {
     }
     return value;
   }
-}
+};
 
 const con = concat(fromTo(0, 3), fromTo(0, 2));
-log('# concat test :')
+log('# concat test :');
 log(con()); // 0
 log(con()); // 1
 log(con()); // 2
 log(con()); // 0
 log(con()); // 1
 log(con()); // undefined
+
+// Function Challenge 6
+
+// gensumf func that makes a func that generate unique symbols
+const gensymf = prefix => {
+  let number = 0;
+  return () => {
+    number += 1;
+    return prefix + number;
+  };
+}
+
+const geng = gensymf('G');
+const genh = gensymf('H');
+
+log('# gensymf test :');
+log(geng()); // G1
+log(genh()); // H1
+log(geng()); // G2
+log(genh()); // H2
+
+// gensymff func that takes a unary func and a seed and returns a gensymf
+// Factory Factory
+const gensymff = (unary, seed) => 
+  prefix => {
+    let number = seed;
+    return () => {
+      number = unary(number);
+      return prefix + number;
+    }
+  };
+
+const gensumF = gensymff(inc, 0);
+
+const genG = gensymf('G');
+const genH = gensymf('H');
+
+log('# gensymff test :');
+log(genG()); // G1
+log(genH()); // H1
+log(genG()); // G2
+log(genH()); // H2
+
+// fibonaccif func that retur>ns a generator that will return the next fibonacci number
+const fibonaccif = (a, b) => {
+  let i = 0;
+  return () => {
+    switch(i) {
+      case 0: {
+        i = 1;
+        return a;
+      }
+      case 1: {
+        i = 2;
+        return b;
+      }
+      default: {
+        next = a + b;
+        a = b;
+        b = next;
+        return next;
+      }
+    }
+  };
+};
+
+// or the most optimal way (that's focus on the fibunacci logic)
+const fibonaccif2 = (a, b) => () => {
+  let next = a;
+  a = b;
+  b += next;
+  return next;
+};
+
+// or using generators
+// TODO: Check out the functions above!
+const fibonaccif3 = (a, b) => 
+  concat(
+    concat(
+      limit(identityf(a), 1),
+      limit(identityf(b), 1),
+    ),
+    fibonacci = () => {
+      const next = a + b;
+      a = b;
+      b = next;
+      return next;
+    },
+  );
+
+// or 
+// FIXME: doesn't return the two first values (element without generator as param always returns undefined)
+const fibonaccif4 = (a, b) => 
+  concat(
+    element([a, b]),
+    fibonacci = () => {
+      const next = a + b;
+      a = b;
+      b = next;
+      return next;
+    },
+  );
+
+const fib = fibonaccif3(0, 1);
+log('# fibonaccif test :');
+log(fib()) // 0
+log(fib()) // 1
+log(fib()) // 1
+log(fib()) // 2
+log(fib()) // 3
+log(fib()) // 5
