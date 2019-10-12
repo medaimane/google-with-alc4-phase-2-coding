@@ -7,7 +7,7 @@ const log = arg => console.log(arg);
 const add = (a, b) => a + b;
 log(add(3, 4)); // 7
 
-// diffrence
+// difference
 const sub = (a, b) => a - b;
 log(sub(3, 4)); // -1
 
@@ -34,7 +34,7 @@ log(addf2(3)(4)); // 7
 log(liftf(mul)(5)(6)); // 30
 
 // Function Challenge 2
-// Currying is the proccess of having functions with multiple agrs and turning into multiple functions that takes a single arg.
+// Currying is the process of having functions with multiple agrs and turning into multiple functions that takes a single arg.
 // Curry
 const curry = (binaryFns, a) => b => binaryFns(a, b);
 const curry2 = (binaryFns, a) => liftf(binaryFns)(a);
@@ -109,7 +109,7 @@ const to = (generator, end) => () => {
     return next;
   }
   return undefined;
-}
+};
 const index2 = to(from(1), 3);
 log(index2()); // 1
 log(index2()); // 2
@@ -130,7 +130,7 @@ const element = (array, generator = () => undefined) => () => {
     return array[index];
   }
   return undefined;
-}
+};
 const ele = element(['a', 'b', 'c', 'd'], fromTo(1, 3));
 log(ele()); // 'b'
 log(ele()); // 'c'
@@ -143,7 +143,7 @@ const element2 = (array, generator = from(0)) => () => {
     return array[index];
   }
   return undefined;
-}
+};
 const ele2 = element2(['a', 'b', 'c', 'd']);
 log(ele2()); // 'a'
 log(ele2()); // 'b'
@@ -160,8 +160,7 @@ const element3 = (array, generator = fromTo(0, array.length)) => () => {
     return array[index];
   }
   return undefined;
-}
-
+};
 const element4 = (array, generator) => {
   if (generator === undefined) {
       generator = fromTo(0, array.length);
@@ -173,8 +172,7 @@ const element4 = (array, generator) => {
     }
     return undefined;
   }
-}
-
+};
 const ele4 = element4(['a', 'b', 'c', 'd']);
 log(ele4()); // 'a'
 log(ele4()); // 'b'
@@ -182,3 +180,91 @@ log(ele4()); // 'c'
 log(ele4()); // 'd'
 log(ele4()); // undefined
 log(ele4()); // undefined
+
+// Function Challenge 5
+
+// Collect func that takes a generator and an array and records all returned values of the generator on that array.
+const collect = (generator, array) => () => {
+  const value = generator();
+  if (value !== undefined) {
+    array.push(value);
+  }
+  return value;
+};
+const array = [];
+const col = collect(fromTo(0, 2), array);
+log('# collect test :');
+log(col()); // 0
+log(col()); // 1
+log(col()); // undefined
+log(array); // [0, 1]
+
+// filter func that takes a generator and a predicate and produces a
+// generator that produces only values that is approved by predicate
+// (predicate is a func that returns a boolean)
+const filter = (generator, predicate) => () => {
+  while (true) {
+    const value = generator();
+    if (value === undefined || predicate(value)) {
+      return value;
+    }
+  }
+};
+// or with do...while loop
+const filter2 = (generator, predicate) => () => {
+  let value;
+  do {
+    value = generator();
+  } while (value !== undefined && !predicate(value));
+  return value;
+};
+// or the best one with recursive func
+const filter3 = (generator, predicate) => {
+  return function recur() {
+    const value = generator();
+    if (value === undefined || predicate(value)) {
+      return value;
+    }
+    return recur();
+  }
+};
+const fil = filter3(fromTo(0, 5), third = (value) => (value % 3) === 0);
+log('# filter test :');
+log(fil()); // 0
+log(fil()); // 3
+log(fil()); // undefined
+
+// concat func that takes two generators and produces a generator that combines a sequences.
+const concat = (generator1, generator2) => () => {
+  const value = generator1();
+  if (value !== undefined) {
+    return value;
+  }
+  return generator2();
+}
+
+// or generic way
+// FIXME: gen is undefined!!
+const concat2 = (...gens) => {
+  const next = element(gens);
+  let gen = next();
+  return function recur() {
+    const value = gen();
+    if (value === undefined) {
+      gen = next();
+      if (gen !== undefined) {
+        return recur();
+      }
+    }
+    return value;
+  }
+}
+
+const con = concat(fromTo(0, 3), fromTo(0, 2));
+log('# concat test :')
+log(con()); // 0
+log(con()); // 1
+log(con()); // 2
+log(con()); // 0
+log(con()); // 1
+log(con()); // undefined
