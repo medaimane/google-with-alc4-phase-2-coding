@@ -379,3 +379,65 @@ log(fib()) // 1
 log(fib()) // 2
 log(fib()) // 3
 log(fib()) // 5
+
+// Function Challenge 7
+// (objectory programming)
+
+// counter func that returns an object containing two functions that implement an up/down counter, hiding the counter
+const counter = value => ({
+  up: () => {
+    value += 1;
+    return value;
+  },
+  down: () => {
+    value -= 1;
+    return value;
+  },
+});
+
+const theObject = counter(10);
+const up = theObject.up;
+const down = theObject.down;
+
+log('# counter test :');
+log(up());    // 11
+log(down());  // 10
+log(down());  // 9
+log(up());    // 10
+
+// revocable funnc, that takes a binary func and returns an object containing: 
+// an invoke func that can invoke the binary func, 
+// and a revoke func that disables the invoke func.
+// (explanation!! useful if it might have some security proprities, 
+// we might have some geust code that we allowing to our system,
+// and we want it to be able to run as long as we want to 
+// and at any point we want to be able to caught it off,
+// so we don't want to rewirte the existing api in order to accumulate that.)
+const revocable = binary => ({
+  invoke: (a, b) => binary(a, b),
+  revoke: () => binary = () => undefined,
+});
+
+// correction
+const revocable2 = binary => ({
+  invoke: (a, b) => binary && binary(a, b),
+  revoke: () => binary = undefined,
+});
+
+// or
+const revocable3 = binary => ({
+  invoke: (a, b) => {
+    if (binary !== undefined) {
+      return binary(a, b)
+    }
+  },
+  revoke: () => binary = undefined,
+});
+
+const rev = revocable3(add);
+const addRev = rev.invoke;
+
+log('# revocable test :');
+log(addRev(3, 4)); // 7
+rev.revoke();
+log(addRev(5, 7)); // undefined
