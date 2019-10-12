@@ -126,7 +126,7 @@ log(index3()); // undefined
 // element - takes an array and a generator and returns a generator that will produce elements from that array
 const element = (array, generator = () => undefined) => () => {
   const index = generator();
-  if(typeof(index) !== 'undefined') {
+  if (typeof index !== 'undefined') {
     return array[index];
   }
   return undefined;
@@ -139,7 +139,7 @@ log(ele()); // undefined
 // making the generator on the element function optional - then the generator which was preduced should return all element of the array
 const element2 = (array, generator = from(0)) => () => {
   const index = generator();
-  if(typeof(index) !== 'undefined') {
+  if (typeof index !== 'undefined') {
     return array[index];
   }
   return undefined;
@@ -156,22 +156,22 @@ log(ele2()); // undefined
 
 const element3 = (array, generator = fromTo(0, array.length)) => () => {
   const index = generator();
-  if(index !== undefined) {
+  if (index !== undefined) {
     return array[index];
   }
   return undefined;
 };
 const element4 = (array, generator) => {
   if (generator === undefined) {
-      generator = fromTo(0, array.length);
+    generator = fromTo(0, array.length);
   }
   return () => {
     const index = generator();
-    if(index !== undefined) {
+    if (index !== undefined) {
       return array[index];
     }
     return undefined;
-  }
+  };
 };
 const ele4 = element4(['a', 'b', 'c', 'd']);
 log(ele4()); // 'a'
@@ -226,9 +226,9 @@ const filter3 = (generator, predicate) => {
       return value;
     }
     return recur();
-  }
+  };
 };
-const fil = filter3(fromTo(0, 5), third = (value) => (value % 3) === 0);
+const fil = filter3(fromTo(0, 5), (third = value => value % 3 === 0));
 log('# filter test :');
 log(fil()); // 0
 log(fil()); // 3
@@ -241,7 +241,7 @@ const concat = (generator1, generator2) => () => {
     return value;
   }
   return generator2();
-}
+};
 
 // or generic way
 // FIXME: gen is undefined!!
@@ -257,7 +257,7 @@ const concat2 = (...gens) => {
       }
     }
     return value;
-  }
+  };
 };
 
 const con = concat(fromTo(0, 3), fromTo(0, 2));
@@ -278,7 +278,7 @@ const gensymf = prefix => {
     number += 1;
     return prefix + number;
   };
-}
+};
 
 const geng = gensymf('G');
 const genh = gensymf('H');
@@ -291,14 +291,13 @@ log(genh()); // H2
 
 // gensymff func that takes a unary func and a seed and returns a gensymf
 // Factory Factory
-const gensymff = (unary, seed) => 
-  prefix => {
-    let number = seed;
-    return () => {
-      number = unary(number);
-      return prefix + number;
-    }
+const gensymff = (unary, seed) => prefix => {
+  let number = seed;
+  return () => {
+    number = unary(number);
+    return prefix + number;
   };
+};
 
 const gensumF = gensymff(inc, 0);
 
@@ -315,7 +314,7 @@ log(genH()); // H2
 const fibonaccif = (a, b) => {
   let i = 0;
   return () => {
-    switch(i) {
+    switch (i) {
       case 0: {
         i = 1;
         return a;
@@ -344,41 +343,38 @@ const fibonaccif2 = (a, b) => () => {
 
 // or using generators
 // TODO: Check out the functions above!
-const fibonaccif3 = (a, b) => 
+const fibonaccif3 = (a, b) =>
   concat(
-    concat(
-      limit(identityf(a), 1),
-      limit(identityf(b), 1),
-    ),
-    fibonacci = () => {
+    concat(limit(identityf(a), 1), limit(identityf(b), 1)),
+    (fibonacci = () => {
       const next = a + b;
       a = b;
       b = next;
       return next;
-    },
+    })
   );
 
-// or 
+// or
 // FIXME: doesn't return the two first values (element without generator as param always returns undefined)
-const fibonaccif4 = (a, b) => 
+const fibonaccif4 = (a, b) =>
   concat(
     element([a, b]),
-    fibonacci = () => {
+    (fibonacci = () => {
       const next = a + b;
       a = b;
       b = next;
       return next;
-    },
+    })
   );
 
 const fib = fibonaccif3(0, 1);
 log('# fibonaccif test :');
-log(fib()) // 0
-log(fib()) // 1
-log(fib()) // 1
-log(fib()) // 2
-log(fib()) // 3
-log(fib()) // 5
+log(fib()); // 0
+log(fib()); // 1
+log(fib()); // 1
+log(fib()); // 2
+log(fib()); // 3
+log(fib()); // 5
 
 // Function Challenge 7
 // (objectory programming)
@@ -392,7 +388,7 @@ const counter = value => ({
   down: () => {
     value -= 1;
     return value;
-  },
+  }
 });
 
 const theObject = counter(10);
@@ -400,44 +396,102 @@ const up = theObject.up;
 const down = theObject.down;
 
 log('# counter test :');
-log(up());    // 11
-log(down());  // 10
-log(down());  // 9
-log(up());    // 10
+log(up()); // 11
+log(down()); // 10
+log(down()); // 9
+log(up()); // 10
 
-// revocable funnc, that takes a binary func and returns an object containing: 
-// an invoke func that can invoke the binary func, 
+// revocable funnc, that takes a binary func and returns an object containing:
+// an invoke func that can invoke the binary func,
 // and a revoke func that disables the invoke func.
-// (explanation!! useful if it might have some security proprities, 
+// (explanation!! useful if it might have some security proprities,
 // we might have some geust code that we allowing to our system,
-// and we want it to be able to run as long as we want to 
+// and we want it to be able to run as long as we want to
 // and at any point we want to be able to caught it off,
 // so we don't want to rewirte the existing api in order to accumulate that.)
 const revocable = binary => ({
   invoke: (a, b) => binary(a, b),
-  revoke: () => binary = () => undefined,
+  revoke: () => (binary = () => undefined)
 });
 
 // correction
 const revocable2 = binary => ({
   invoke: (a, b) => binary && binary(a, b),
-  revoke: () => binary = undefined,
+  revoke: () => (binary = undefined)
 });
 
 // or
 const revocable3 = binary => ({
   invoke: (a, b) => {
     if (binary !== undefined) {
-      return binary(a, b)
+      return binary(a, b);
     }
   },
-  revoke: () => binary = undefined,
+  revoke: () => (binary = undefined)
 });
 
-const rev = revocable3(add);
+const rev = revocable(add);
 const addRev = rev.invoke;
 
 log('# revocable test :');
 log(addRev(3, 4)); // 7
 rev.revoke();
 log(addRev(5, 7)); // undefined
+
+// Functions Challenge 8
+
+// m func, that takes a value and an optional source string and returns them in an object
+const m0 = (value, source = String(value)) => ({
+  value,
+  source
+});
+
+// correction
+const m = (value, source) => ({
+  value,
+  source: typeof source === 'string' ? source : String(value)
+});
+
+log('# m test :');
+log(JSON.stringify(m(1))); // { "value": 1, "source": "1" }
+log(JSON.stringify(m(Math.PI, 'pi'))); // { "value": 3.14159..., "source": "pi" }
+
+// addm func, that takes two m object and returns an m object
+const addm = (m1, m2) =>
+  m(
+    m1.value + m2.value,
+    // '('+m1.source+'+'+m2.source+')',
+    `(${m1.source}+${m2.source})`
+  );
+
+log('# addm test :');
+log(JSON.stringify(addm(m(3), m(4)))); // { "value": 7, "source": "(3+4)" }
+log(JSON.stringify(addm(m(1), m(Math.PI, 'pi')))); // { "value": 4.14159..., "source": "(1+pi)" }
+
+// liftm func, that takes a binary func and a string and returns a func that acts on m objects
+const liftm = (binary, op) => (m1, m2) =>
+  m(
+    binary(m1.value, m2.value),
+    // '('+m1.source+op+m2.source+')',
+    `(${m1.source}${op}${m2.source})`
+  );
+
+const addM = liftm(add, '+');
+log('# liftm test :');
+log(JSON.stringify(addm(m(3), m(4)))); // { "value": 7, "source": "(3+4)" }
+log(JSON.stringify(liftm(mul, '*')(m(3), m(4)))); // { "value": 12, "source": "(3*4)" }
+
+// liftmm func (modifing liftm) so that the func it produces can accept arguments that are either numbers or m objects
+const liftmm = (binary, op) => (a, b) => {
+  const m1 = (typeof a === 'number') ? m(a) : a;
+  const m2 = (typeof b === 'number') ? m(b) : b;
+  return m(
+    binary(m1.value, m2.value),
+    // '('+m1.source+op+m2.source+')',
+    `(${m1.source}${op}${m2.source})`
+  );
+};
+
+const addMM = liftmm(add, '+');
+log('# liftmm test :');
+log(JSON.stringify(addMM(3, 4))); // { "value": 7, "source": "(3+4)" }
