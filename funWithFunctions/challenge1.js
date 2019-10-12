@@ -495,3 +495,41 @@ const liftmm = (binary, op) => (a, b) => {
 const addMM = liftmm(add, '+');
 log('# liftmm test :');
 log(JSON.stringify(addMM(3, 4))); // { "value": 7, "source": "(3+4)" }
+
+// Functions Challenge 9
+
+// exp func that evaluates simple array expressions
+const exp = value => {
+  if (Array.isArray(value)) {
+    return value[0](value[1], value[2]);
+  }
+  return value;
+}
+
+const sae = [mul, 5, 11];
+log('# exp test :');
+log(exp(sae)); // 55
+log(exp(42)); // 42
+
+// expm func (modify exp) that evaluate nested array expressions
+// recursion: a function calls itself
+const expm = value => {
+  if (Array.isArray(value)) {
+    return value[0](
+      expm(value[1]),
+      expm(value[2]),
+    );
+  }
+  return value;
+};
+
+const nae = [
+  Math.sqrt,
+  [
+    add,
+    [square, 3],
+    [square, 4],
+  ],
+];
+log('# expm test :');
+log(expm(nae)); // 5
