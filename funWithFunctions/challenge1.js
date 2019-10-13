@@ -648,10 +648,10 @@ const vector = () => {
   const array = [];
   return {
     append: value => {
-      return array.push(value);
+      array.push(value);
     },
     store: (index, value) => {
-      return array[index] = value;
+      array[index] = value;
     },
     get: index => {
       return array[index];
@@ -677,3 +677,32 @@ myvector.append(7);
 myvector.store(1, 8);
 log(myvector.get(0)); // 7
 log(myvector.get(1)); // 8
+
+// The attack
+log('# Attack');
+let stash;
+// store push as a prop, the array.push will call our definition of push function
+myvector.store('push', function () {
+  log('# store array (this) to outer variable');
+  stash = this;
+});
+// call append so we can call push
+myvector.append(); // stash is the array
+log(stash);
+
+// correction of vector
+const vector3 = () => {
+  const array = [];
+
+  return {
+    get: i => {
+      return array[+i]; // force the index to be a number
+    },
+    store: (i, v) => {
+      array[+i] = v;
+    },
+    append: v => {
+      array[array.length] = v; // not using push
+    },
+  }
+}
