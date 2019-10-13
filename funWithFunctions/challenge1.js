@@ -1,3 +1,6 @@
+// Good Parts of JavaScript and the Web
+// by Douglas Crockford
+
 // utils
 const log = arg => console.log(arg);
 
@@ -533,3 +536,94 @@ const nae = [
 ];
 log('# expm test :');
 log(expm(nae)); // 5
+
+// Functions Challenge 10
+// retursion: a func returns itself
+
+// addg func that adds from many invocations, until it sees an empty invocation.
+const addg = first => {
+  const more = next => {
+    if (next === undefined) {
+      return first;
+    }
+    first += next;
+    return more;
+  };
+  if (first !== undefined) {
+    return more;
+  }
+};
+
+log('# addg test :');
+log(addg());              // undefined
+log(addg(2)());           // 2
+log(addg(2)(7)());        // 9
+log(addg(3)(0)(4)());     // 7
+log(addg(1)(2)(4)(8)());  // 15
+
+// liftg func, that takes a binary func and apply it to many invocations.
+const liftg = binary => first => {
+  if (first === undefined) {
+    return first;
+  }
+  const more = next => {
+    if (next === undefined) {
+      return first;
+    }
+    first = binary(first, next);
+    return more;
+  };
+  return more;
+}
+
+log('# liftg test :');
+log(liftg(mul)());              // undefined
+log(liftg(mul)(3)());           // 3
+log(liftg(mul)(3)(0)(4)());     // 0
+log(liftg(mul)(1)(2)(4)(8)());  // 64
+
+// arrayg func, that build an array from many invocations
+const arrayg = first => {
+  const array = [];
+  const more = next => {
+    if (next === undefined) {
+      return array;
+    }
+    array.push(next);
+    return more;
+  };
+  return more(first);
+}
+
+// or with using liftg func
+const arrayg2 = first => {
+  if (first === undefined) {
+    return [];
+  }
+  return liftg(
+    (array, value) => {
+      array.push(value);
+      return array;
+    }
+  )([first]);
+}
+
+log('# arrayg test :');
+log(arrayg2());              // []
+log(arrayg2(3)());           // [3]
+log(arrayg2(3)(4)(5)());     // [3, 4, 5]
+
+// continuize func, that takes unary func and returns a function that takes a callback and an arg.
+// (continuation passing style)
+const continuize = unary => 
+  (callback, arg) => 
+    callback(unary(arg));
+
+// or more generic
+const continuize2 = any => 
+  (callback, ...arg) => 
+    callback(any(...arg));
+
+log('# continuize test :');
+sqrtc = continuize2(Math.sqrt);
+sqrtc(log, 81); // 9
