@@ -706,3 +706,121 @@ const vector3 = () => {
     },
   }
 }
+
+// Functions Challenge 12
+
+// pubsub func, that makes a publish/subscribe object.
+// It will reliably deliver all publications to all subscribers in the right order.
+const pubsub = () => {
+  const subscribers = [];
+
+  return {
+    subscribe: party => {
+      subscribers.push(party);
+    },
+    publish: publication => {
+      const i, length = subscribers.length;
+      for (i = 0; i < length; i += 1) {
+        subscriber(publication);
+      }
+    },
+  };
+};
+
+log('# pubsub test :');
+mypubsub = pubsub();
+mypubsub.subscribe(log);
+mypubsub.publish('It works!'); // log('It's works')
+
+// The simplest attack can be
+mypubsub.subscribe(); // no param
+
+// fix, add try...catch block
+const pubsub2 = () => {
+  const subscribers = [];
+
+  return {
+    subscribe: party => {
+      subscribers.push(party);
+    },
+    publish: publication => {
+      const i, length = subscribers.length;
+      for (i = 0; i < length; i += 1) {
+        try {
+          subscriber(publication);
+        } catch (ignore) {}
+      }
+    },
+  };
+};
+
+// the second attack (change the publish behaivor)
+mypubsub.publish = undefined;
+
+// fix, freeze the returned object
+const pubsub3 = () => {
+  const subscribers = [];
+
+  return Object.freeze({
+    subscribe: party => {
+      subscribers.push(party);
+    },
+    publish: publication => {
+      for (i = 0; i < length; i += 1) {
+        try {
+          subscriber(publication);
+        } catch (ignore) {}
+      }
+    },
+  });
+};
+
+// the third attack
+mypubsub.subscribe(function() {
+  this.length = 0;
+});
+
+// fix, use a foreach
+const pubsub4 = () => {
+  const subscribers = [];
+
+  return {
+    subscribe: party => {
+      subscribers.push(party);
+    },
+    publish: publication => {
+      subscribers.forEach(subscriber => {
+        try {
+          subscriber(publication);
+        } catch (ignore) {}
+      });
+    },
+  };
+};
+
+// fourth attack, force other publication
+mypubsub.subscribe(limit(() => {
+  mypubsub.publish('Out of order');
+}, 1))
+
+// fix, move publication to seprate que, any change will be later
+const pubsub5 = () => {
+  const subscribers = [];
+
+  return {
+    subscribe: party => {
+      subscribers.push(party);
+    },
+    publish: publication => {
+      subscribers.forEach(subscriber => {
+        try {
+          setTimeout(() => {
+            subscriber(publication);
+          }, 0);
+        } catch (ignore) {}
+      });
+    },
+  };
+};
+
+// still have to fix the return value of setTimeout in order to avoid clearing timeout...
