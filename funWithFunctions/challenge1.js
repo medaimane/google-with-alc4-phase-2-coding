@@ -1,5 +1,6 @@
 // Good Parts of JavaScript and the Web
 // by Douglas Crockford
+// Workshop series
 
 // utils
 const log = arg => console.log(arg);
@@ -486,8 +487,8 @@ log(JSON.stringify(liftm(mul, '*')(m(3), m(4)))); // { "value": 12, "source": "(
 
 // liftmm func (modifing liftm) so that the func it produces can accept arguments that are either numbers or m objects
 const liftmm = (binary, op) => (a, b) => {
-  const m1 = (typeof a === 'number') ? m(a) : a;
-  const m2 = (typeof b === 'number') ? m(b) : b;
+  const m1 = typeof a === 'number' ? m(a) : a;
+  const m2 = typeof b === 'number' ? m(b) : b;
   return m(
     binary(m1.value, m2.value),
     // '('+m1.source+op+m2.source+')',
@@ -507,7 +508,7 @@ const exp = value => {
     return value[0](value[1], value[2]);
   }
   return value;
-}
+};
 
 const sae = [mul, 5, 11];
 log('# exp test :');
@@ -518,22 +519,12 @@ log(exp(42)); // 42
 // recursion: a function calls itself
 const expm = value => {
   if (Array.isArray(value)) {
-    return value[0](
-      expm(value[1]),
-      expm(value[2]),
-    );
+    return value[0](expm(value[1]), expm(value[2]));
   }
   return value;
 };
 
-const nae = [
-  Math.sqrt,
-  [
-    add,
-    [square, 3],
-    [square, 4],
-  ],
-];
+const nae = [Math.sqrt, [add, [square, 3], [square, 4]]];
 log('# expm test :');
 log(expm(nae)); // 5
 
@@ -555,11 +546,11 @@ const addg = first => {
 };
 
 log('# addg test :');
-log(addg());              // undefined
-log(addg(2)());           // 2
-log(addg(2)(7)());        // 9
-log(addg(3)(0)(4)());     // 7
-log(addg(1)(2)(4)(8)());  // 15
+log(addg()); // undefined
+log(addg(2)()); // 2
+log(addg(2)(7)()); // 9
+log(addg(3)(0)(4)()); // 7
+log(addg(1)(2)(4)(8)()); // 15
 
 // liftg func, that takes a binary func and apply it to many invocations.
 const liftg = binary => first => {
@@ -574,13 +565,13 @@ const liftg = binary => first => {
     return more;
   };
   return more;
-}
+};
 
 log('# liftg test :');
-log(liftg(mul)());              // undefined
-log(liftg(mul)(3)());           // 3
-log(liftg(mul)(3)(0)(4)());     // 0
-log(liftg(mul)(1)(2)(4)(8)());  // 64
+log(liftg(mul)()); // undefined
+log(liftg(mul)(3)()); // 3
+log(liftg(mul)(3)(0)(4)()); // 0
+log(liftg(mul)(1)(2)(4)(8)()); // 64
 
 // arrayg func, that build an array from many invocations
 const arrayg = first => {
@@ -593,37 +584,96 @@ const arrayg = first => {
     return more;
   };
   return more(first);
-}
+};
 
 // or with using liftg func
 const arrayg2 = first => {
   if (first === undefined) {
     return [];
   }
-  return liftg(
-    (array, value) => {
-      array.push(value);
-      return array;
-    }
-  )([first]);
-}
+  return liftg((array, value) => {
+    array.push(value);
+    return array;
+  })([first]);
+};
 
 log('# arrayg test :');
-log(arrayg2());              // []
-log(arrayg2(3)());           // [3]
-log(arrayg2(3)(4)(5)());     // [3, 4, 5]
+log(arrayg2()); // []
+log(arrayg2(3)()); // [3]
+log(arrayg2(3)(4)(5)()); // [3, 4, 5]
 
 // continuize func, that takes unary func and returns a function that takes a callback and an arg.
 // (continuation passing style)
-const continuize = unary => 
-  (callback, arg) => 
-    callback(unary(arg));
+const continuize = unary => (callback, arg) => callback(unary(arg));
 
 // or more generic
-const continuize2 = any => 
-  (callback, ...arg) => 
-    callback(any(...arg));
+const continuize2 = any => (callback, ...arg) => callback(any(...arg));
 
 log('# continuize test :');
-sqrtc = continuize2(Math.sqrt);
+const sqrtc = continuize2(Math.sqrt);
 sqrtc(log, 81); // 9
+
+// Building a better constructor
+// before ES6
+function constructor(init) {
+  var that = otherConstructor(init);
+  var member;
+  var method = function() {
+    // init, member, method
+  };
+  that.method = method;
+  return that;
+}
+
+// ES6
+function constructor2(spec) {
+  let {member} = spec;
+  // how to do inheritance from something else
+  const {other} = otherConstructor(spec);
+  const method = () => {
+    // spec, member, other, method
+  };
+  // A frozen object can no longer be changed
+  return Object.freeze({
+    method,
+    other,
+  });
+}
+
+// Functions Challenge 11
+
+// vector, an array wrapper object with methods get, store, and append,
+// such an attacker cannot get access to the private array
+const vector = () => {
+  const array = [];
+  return {
+    append: value => {
+      return array.push(value);
+    },
+    store: (index, value) => {
+      return array[index] = value;
+    },
+    get: index => {
+      return array[index];
+    },
+  };
+}
+
+const vector2 = () => {
+  const array = [];
+  append = value => array.push(value);
+  store = (index, value) => array[index] = value;
+  get = index => array[index];
+  return Object.freeze({
+    append,
+    store,
+    get,
+  });
+}
+
+log('# vector test :');
+const myvector = vector();
+myvector.append(7);
+myvector.store(1, 8);
+log(myvector.get(0)); // 7
+log(myvector.get(1)); // 8
